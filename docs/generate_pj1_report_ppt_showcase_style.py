@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 import matplotlib.pyplot as plt
 from pptx import Presentation
@@ -9,6 +10,7 @@ from pptx.util import Inches, Pt
 
 
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = BASE_DIR.parent / "SoftwareTestingDemo" / "SoftwareTestingDemo"
 OUTPUT_DIR = BASE_DIR / "output"
 ASSETS_DIR = OUTPUT_DIR / "assets"
 OUTPUT_PPT = OUTPUT_DIR / "PJ1测试汇报_成果展示风格版.pptx"
@@ -217,6 +219,33 @@ def add_code_block(slide, text: str, left, top, width, height):
             run.font.color.rgb = RGBColor(40, 60, 80)
 
 
+def extract_java_method_snippet(file_path: Path, method_name: str) -> str:
+    content = file_path.read_text(encoding="utf-8")
+    pattern = re.compile(
+        rf"(^\s*@Test\s*\n)?^\s*void\s+{re.escape(method_name)}\s*\([^)]*\)\s*(?:throws [^{{]+)?\{{",
+        re.MULTILINE,
+    )
+    match = pattern.search(content)
+    if not match:
+        raise ValueError(f"Method not found: {method_name} in {file_path}")
+
+    start = match.start()
+    brace_start = content.find("{", match.end() - 1)
+    depth = 0
+    end = brace_start
+    for idx in range(brace_start, len(content)):
+        char = content[idx]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                end = idx
+                break
+
+    return content[start : end + 1].strip()
+
+
 def new_slide(prs: Presentation, number: int):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     add_footer_strip(slide)
@@ -228,6 +257,14 @@ def build_deck() -> None:
     ensure_dirs()
     coverage_chart = ASSETS_DIR / "coverage_summary_showcase.png"
     create_coverage_chart(coverage_chart)
+    integration_snippet = extract_java_method_snippet(
+        PROJECT_DIR / "src" / "test" / "java" / "com" / "demo" / "controller" / "OrderControllerIntegrationTest.java",
+        "shouldReturnLoggedUserOrdersOnly",
+    )
+    unit_snippet = extract_java_method_snippet(
+        PROJECT_DIR / "src" / "test" / "java" / "com" / "demo" / "service" / "impl" / "UserServiceImplTest.java",
+        "shouldReturnNewUserCountAfterCreate",
+    )
 
     prs = Presentation()
     prs.slide_width = Inches(13.333333)
@@ -471,7 +508,7 @@ def build_deck() -> None:
     add_title(slide, "示例")
     add_code_block(
         slide,
-        "@Test\nvoid cancelOrder_shouldRedirectWhenLoginUserOwnsOrder() {\n    mockMvc.perform(get(\"/order/cancel\")\n        .param(\"orderID\", \"1\")\n        .sessionAttr(\"user\", user))\n      .andExpect(status().is3xxRedirection())\n      .andExpect(redirectedUrl(\"/order/list\"));\n}",
+        integration_snippet,
         0.7,
         1.35,
         5.8,
@@ -479,13 +516,13 @@ def build_deck() -> None:
     )
     add_code_block(
         slide,
-        "@Test\nvoid checkLogin_shouldReturnNullWhenPasswordMismatch() {\n    when(userDao.getUser(\"u01\")).thenReturn(user);\n    User result = userService.checkLogin(\"u01\", \"bad\");\n    assertNull(result);\n}",
+        unit_snippet,
         6.8,
         1.35,
         5.8,
         3.55,
     )
-    add_textbox(slide, "左侧：controller 集成测试路径校验\n右侧：service 单元测试分支校验", 2.6, 5.35, 8.2, 0.55, size=16, color=BROWN, align=PP_ALIGN.CENTER)
+    add_textbox(slide, "左侧：真实集成测试脚本片段\n右侧：真实单元测试脚本片段", 2.6, 5.35, 8.2, 0.55, size=16, color=BROWN, align=PP_ALIGN.CENTER)
 
     # 15
     slide = new_slide(prs, 15)
