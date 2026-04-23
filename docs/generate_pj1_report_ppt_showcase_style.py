@@ -273,7 +273,7 @@ def build_deck() -> None:
     # 1
     slide = new_slide(prs, 1)
     add_textbox(slide, "SoftwareTestingDemo  测试成果展示", 1.45, 1.2, 10.5, 0.8, size=29, bold=True, align=PP_ALIGN.CENTER)
-    subtitle = "第 PJ1 小组   胡彬泽 沙华煜 彭祈元 郭政颖 周宇尘\n测试计划标识   Project1_TestPlan_V1.2_20260423"
+    subtitle = "第 PJ1 小组   胡彬泽 沙华煜 彭祈元 郭政颍 周宇尘\n测试计划标识   Project1_TestPlan_V1.2_20260423"
     add_textbox(slide, subtitle, 1.2, 3.4, 10.9, 0.9, size=17, align=PP_ALIGN.CENTER)
 
     # 2
@@ -377,7 +377,7 @@ def build_deck() -> None:
             ["1", "胡彬泽", "环境搭建；service 单测；controller 集成测试；覆盖率报告", "40%"],
             ["2", "沙华煜", "项目测试计划书；统一团队口径；交付清单", "15%"],
             ["3", "彭祈元", "单元测试用例文档；维护 UT 编号", "15%"],
-            ["4", "郭政颖", "集成测试用例文档；维护 controller 编号", "15%"],
+            ["4", "郭政颍", "集成测试用例文档；维护 controller 编号", "15%"],
             ["5", "周宇尘", "测试总结；结果汇总；改进建议", "15%"],
         ],
         2.35,
