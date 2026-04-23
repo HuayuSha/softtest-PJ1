@@ -2,7 +2,11 @@ package com.demo.controller;
 
 import com.demo.entity.User;
 import org.junit.jupiter.api.Test;
+import org.springframework.util.ClassUtils;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
+
+import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -139,6 +143,25 @@ class UserControllerIntegrationTest extends AbstractControllerIntegrationTest {
     }
 
     @Test
+    void shouldUpdateUserProfileWithPicture() throws Exception {
+        mockMvc.perform(multipart("/updateUser.do")
+                        .file(new MockMultipartFile("picture", "user.txt", "text/plain", "user-image".getBytes()))
+                        .session(userSession())
+                        .param("userName", "学生一-头像更新")
+                        .param("userID", normalUser.getUserID())
+                        .param("passwordNew", "pwd-photo")
+                        .param("email", "photo@mail.com")
+                        .param("phone", "13600000002"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("user_info"));
+
+        User updated = userDao.findByUserID(normalUser.getUserID());
+        assertThat(updated.getPicture()).startsWith("file/user/");
+        assertThat(updated.getPassword()).isEqualTo("pwd-photo");
+        deleteSavedFile(updated.getPicture());
+    }
+
+    @Test
     void shouldCheckPassword() throws Exception {
         mockMvc.perform(get("/checkPassword.do")
                         .param("userID", normalUser.getUserID())
@@ -161,5 +184,11 @@ class UserControllerIntegrationTest extends AbstractControllerIntegrationTest {
         mockMvc.perform(get("/user_info").session(userSession()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("user_info"));
+    }
+
+    private void deleteSavedFile(String relativePath) {
+        File savedFile = new File(ClassUtils.getDefaultClassLoader().getResource("static").getPath(), relativePath);
+        assertThat(savedFile).exists();
+        assertThat(savedFile.delete()).isTrue();
     }
 }
